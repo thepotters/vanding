@@ -1,65 +1,64 @@
-/*
-int fugtsensor1 = A0;
-int relay1 = 7;
-int fugtreading = analogRead(fugtsensor1);
-unsigned long previousmillis = 0;
-const long vandingstid  = 10000;
-*/
 
 int maxRelays = 4;
-int fugtSensor[4] = {0, 1, 2, 3};
-int relay[4]= {7, 3, 9, 11};
-int fugtReading[4];
-unsigned long previousMillis = 0;
-const long vandingsTid  = 10000;
+int fugtSensor[4] = {A0, A0, A0, A0};
+int lightSensor = A1;
+int temperature = A2;
+int humidtity = A3;
 
-void setup() 
-{
-    for (int i = 0; i < maxRelays; i++) 
-  {
+int relay[4]= {7, 3, 9, 11};
+unsigned long previousMillis = 0;
+unsigned long startedWater[4];
+const long vandingsTid  = 3000;
+
+unsigned long lastInform;
+int nextInform = 0;
+
+void setup() {
+  for (int i = 0; i < maxRelays; i++) {
     pinMode(fugtSensor[i], INPUT);
     pinMode(relay[i], OUTPUT);
   }
-
+  pinMode(lightSensor, INPUT);
+  pinMode(temperature, INPUT);
+  pinMode(humidtity, INPUT);
   
-
+  lastInform = millis();
   Serial.begin(9600);
   Serial.println("Reading Sensors....");
 }
 
 
-void loop() 
-{
-  Serial.println("Debug:");
-  for (int i = 0; i < maxRelays; i++) 
-  {
-    fugtReading[i] = analogRead(fugtSensor[i]);
-     Serial.println("Fugtighed:");
-     Serial.print(analogRead(fugtSensor[i]));
+void loop() {
+  for (int i = 0; i < maxRelays; i++) {
+    if (analogRead(fugtSensor[i]) <= 700 && digitalRead(relay[i]) == LOW && millis() - 10000 > startedWater[i] ) {
+      digitalWrite(relay[i], HIGH);
+      startedWater[i] = millis();
+    }
+    if (digitalRead(relay[i]) == HIGH && millis() - startedWater[i] >= vandingsTid) {
+      digitalWrite(relay[i], LOW);
+    }
   }
- 
-  
-  unsigned long currentMillis = millis();
-  
-  if (currentMillis - previousMillis >= 1000) 
-  {
-   previousMillis = currentMillis;
-   for (int i = 0; i < maxRelays; i++) {
-     if (fugtReading[i] <= 700) 
-      {
-       digitalWrite(relay[i], HIGH);
-       if (currentMillis - previousMillis >= vandingsTid)
-        {
-         digitalWrite(relay[i], LOW);
-        }
-      }
-    if (digitalRead(relay[i] == HIGH))
-     {
-        Serial.println("Relay on #" + relay[i]);
-      //  Serial.print(relay[i];
-     //   Serial.print(" Tændt");
-     }
-   }
-  }
+  inform();
+}
 
+void inform() {
+  if (millis() >= lastInform) {
+    Serial.print("=== Potteplante #");
+    Serial.print(nextInform + 1);
+    Serial.println(" ===");
+    Serial.print("Fugtighedsniveau: ");
+    Serial.println(analogRead(fugtSensor[nextInform]));
+    Serial.print("Lys niveau: ");
+    Serial.println(analogRead(lightSensor));
+    Serial.print("Temperatur: ");
+    Serial.println(analogRead(temperature));
+    Serial.print("Luftfugtighed: ");
+    Serial.println(analogRead(humidtity));
+    Serial.println();
+    lastInform = millis() + 2000;
+    nextInform++;
+    if (nextInform >= maxRelays) {
+      nextInform = 0;
+    }
+  }
 }
