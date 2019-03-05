@@ -1,8 +1,8 @@
 
 int maxRelays = 4;
-int fugtSensor[4] = {A0, A0, A0, A0};
-int lightSensor = A1;
-int temperature = A2;
+int fugtSensor[4] = {A0, A0, A1, A1};
+int lightSensor = A3;
+int temperature = A4;
 int humidtity = A3;
 
 int relay[4]= {7, 3, 9, 11};
